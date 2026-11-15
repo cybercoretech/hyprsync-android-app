@@ -1,0 +1,17 @@
+# Gradle wrapper files
+gradle/wrapper/
+gradlew
+gradlew.bat
+
+# Android build outputs
+**/build/
+**/app/build/
+
+# Local configuration files
+local.properties
+.idea/
+*.iml
+
+# Misc
+.gradle/
+.DS_Store
