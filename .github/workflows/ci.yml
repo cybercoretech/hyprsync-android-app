@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 3 * * 0' # weekly Sunday at 03:00 UTC
+
+jobs:
+  build-test:
+    strategy:
+      matrix:
+        api-level: [ 29, 33 ]
+        java-version: [ '11', '17' ]
+        gradle-version: [ '7.6', '8.7' ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java-version }}
+
+      - name: Install Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: ${{ matrix.gradle-version }}
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Ktlint check
+        run: ./gradlew ktlintCheck
+
+      - name: Detekt static analysis
+        run: ./gradlew detekt
+
+      - name: Run unit tests with coverage
+        run: |
+          ./gradlew testDebugUnitTest jacocoTestReport
+        env:
+          CI: true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          fail_ci_if_error: true
+
+      - name: Run UI tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          script: ./gradlew connectedDebugAndroidTest
+
+      - name: OWASP Dependency-Check scan
+        run: |
+          if ./gradlew tasks --all | grep -q dependencyCheck; then
+            ./gradlew dependencyCheckAnalyze
+          else
+            echo "dependency-check not configured, skipping."
+          fi
+
+      - name: Dependency updates check
+        run: |
+          if ./gradlew tasks --all | grep -q dependencyUpdates; then
+            ./gradlew dependencyUpdates
+          else
+            echo "dependencyUpdates task not available."
+          fi
+
+      - name: Assemble Debug APK
+        run: ./gradlew assembleDebug
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+      - name: Run Ktlint format check
+        run: ./gradlew ktlintCheck
+      - name: Run Detekt
+        run: ./gradlew detekt
