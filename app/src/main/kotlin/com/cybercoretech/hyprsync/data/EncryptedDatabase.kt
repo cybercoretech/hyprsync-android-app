@@ -5,8 +5,8 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SQLiteOpenHelper
+import net.zetetic.database.sqlcipher.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper
 import java.security.KeyStore
 import java.security.SecureRandom
 import javax.crypto.Cipher
@@ -81,17 +81,30 @@ object DatabaseKey {
  */
 class EncryptedDatabaseHelper(
     context: Context,
-) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
-    private val appContext = context.applicationContext
-
+) : SQLiteOpenHelper(
+        context,
+        DATABASE_NAME,
+        DatabaseKey.passphrase(context),
+        // default cursor factory
+        null,
+        DATABASE_VERSION,
+        // minimumSupportedVersion: never delete an old database
+        0,
+        // default error handler
+        null,
+        // no SQLiteDatabaseHook
+        null,
+        // no write-ahead logging
+        false,
+    ) {
     companion object {
         private const val DATABASE_NAME = "hyprsync.db"
         private const val DATABASE_VERSION = 1
-    }
 
-    init {
-        // Load the native libraries for SQLCipher.
-        SQLiteDatabase.loadLibs(context)
+        init {
+            // Load SQLCipher's native library once, before the first database opens.
+            System.loadLibrary("sqlcipher")
+        }
     }
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -121,8 +134,8 @@ class EncryptedDatabaseHelper(
         onCreate(db)
     }
 
-    /** Opens the encrypted DB with the Keystore-protected passphrase. */
-    fun getWritableEncryptedDb(): SQLiteDatabase = getWritableDatabase(DatabaseKey.passphrase(appContext))
+    /** Opens the encrypted DB; the Keystore-protected passphrase was given to the constructor. */
+    fun getWritableEncryptedDb(): SQLiteDatabase = writableDatabase
 
-    fun getReadableEncryptedDb(): SQLiteDatabase = getReadableDatabase(DatabaseKey.passphrase(appContext))
+    fun getReadableEncryptedDb(): SQLiteDatabase = readableDatabase
 }

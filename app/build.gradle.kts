@@ -16,6 +16,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -44,17 +45,20 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation("androidx.compose.ui:ui:1.6.7")
     implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("androidx.compose.material:material-icons-core:1.6.7")
     implementation("androidx.compose.ui:ui-tooling-preview:1.6.7")
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     debugImplementation("androidx.compose.ui:ui-tooling:1.6.7")
 
     // SQLCipher for encrypted SQLite
-    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
-    implementation("androidx.sqlite:sqlite:2.4.0") // SQLCipher's SQLiteDatabase extends SupportSQLiteDatabase
+    implementation("net.zetetic:sqlcipher-android:4.6.1@aar") // 16 KB page-aligned native libs
+    implementation("androidx.sqlite:sqlite:2.4.0") // sqlcipher-android implements the androidx.sqlite interfaces
 
     // ZXing core for QR code generation (the scanner UI library isn't needed)
     implementation("com.google.zxing:core:3.5.3")
 
     testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
 }
