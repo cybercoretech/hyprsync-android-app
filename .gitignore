@@ -1,11 +1,9 @@
-# Gradle wrapper files
-gradle/wrapper/
-gradlew
-gradlew.bat
+# Gradle (the wrapper itself, gradlew and gradle/wrapper/, is committed)
+.gradle/
+.kotlin/
 
 # Android build outputs
 **/build/
-**/app/build/
 
 # Local configuration files
 local.properties
@@ -13,5 +11,4 @@ local.properties
 *.iml
 
 # Misc
-.gradle/
 .DS_Store
